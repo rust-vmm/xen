@@ -11,4 +11,5 @@ exclude = [
     "oxerun",
     "examples/ioctls",
     "examples/xstore",
+    "tests",
 ]
