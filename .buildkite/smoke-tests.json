@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "test_name": "oxerun: run hello world unikernel",
+      "command": "cd tests && cargo test test_run_aarch64_smoke_test_in_qemu -- --nocapture",
+      "soft_fail": "true",
+      "docker_plugin": {
+        "privileged": true
+      },
+      "platform": [
+        "x86_64"
+      ]
+    }
+  ]
+}

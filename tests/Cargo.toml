@@ -1,0 +1,9 @@
+[package]
+name = "tests"
+authors = ["Manos Pitsidianakis <manos.pitsidianakis@linaro.org>"]
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "Apache-2.0 OR BSD-3-Clause"
+
+[dependencies]
