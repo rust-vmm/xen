@@ -1,5 +1,6 @@
 /*
  * Copyright 2016-2017 Doug Goldstein <cardoe@cardoe.com>
+ * Copyright 2025      Teddy Astie <teddy.astie@vates.tech>
  *
  * Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
  * http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -8,8 +9,4 @@
  * except according to those terms.
  */
 
-// export hypercall interfaces
-
-/// System Serial Console
-pub mod console_io;
-pub mod sched_op;
+pub mod hvm;

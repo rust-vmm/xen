@@ -1,5 +1,8 @@
 [package]
-authors = ["Doug Goldstein <cardoe@cardoe.com>"]
+authors = [
+  "Doug Goldstein <cardoe@cardoe.com>",
+  "Teddy Astie <teddy.astie@vates.tech>",
+]
 description = "Kernel level hypercall support for Xen"
 categories = ["external-ffi-bindings"]
 homepage = "https://github.com/rust-vmm/xen-sys"
@@ -11,5 +14,6 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-cty = "=0.2.0"
+cty = "0.2.0"
 xen-bindings = { path = "../xen-bindings" }
+thiserror = { version = "2.0.17", default-features = false }
