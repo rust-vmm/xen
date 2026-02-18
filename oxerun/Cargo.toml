@@ -1,14 +1,51 @@
 [package]
-authors = ["Doug Goldstein <cardoe@cardoe.com>"]
+authors = [
+    "Doug Goldstein <cardoe@cardoe.com>",
+    "Teddy Astie <teddy.astie@vates.tech>",
+    "The Rust Hypervisor Firmware Authors", # Based on Rust Hypervisor Firmware code
+]
 description = "Compiler bits to create Rust unikernels for Xen"
 homepage = "https://github.com/rust-vmm/xen-sys"
 repository = "https://github.com/rust-vmm/xen-sys.git"
-license = "Apache-2.0 OR MIT"
+license = "Apache-2.0"
 name = "oxerun"
 readme = "README.md"
 version = "0.1.0"
-edition = "2018"
+edition = "2024"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = "fat"
 
 [dependencies]
+bitflags = "2.9.1"
+atomic_refcell = "0.1.13"
+log = "0.4.27"
+volatile = { version = "0.6.1", features = ["derive", "unstable"] }
 xen = { path = "../xen" }
 xen-sys = { path = "../xen-sys" }
+enum_dispatch = "0.3.13"
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+tock-registers = "0.10.0"
+aarch64-cpu = "10.0.0"
+fdt = "0.1.5"
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+uart_16550 = "0.4.0"
+x86_64 = { version = "0.15.2", default-features = false, features = [
+    "instructions",
+] }
+
+[target.'cfg(target_arch = "riscv64")'.dependencies]
+fdt = "0.1.5"
+
+[features]
+sev = ["small_mm"]
+fastabi = []
+
+# Use a small memory model, disable to use a flat 4GB memory model
+small_mm = []
