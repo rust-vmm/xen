@@ -1,0 +1,13 @@
+[package]
+name = "xen-unix"
+description = "Xen interfaces for Unix platforms"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+xen = { path = "../xen" }
+xen-sys = { path = "../xen-sys" }
+
+[dependencies.nix]
+version = "0.30.1"
+features = ["ioctl", "mman"]
