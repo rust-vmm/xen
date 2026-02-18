@@ -4,16 +4,20 @@
 
 This is an example build of Rust building a full unikernel for Xen.
 
+You need to use nightly Rust compiler.
+
 ## Building for x86_64:
 
+Using Rust 1.92 nightly build.
+
 ```shell
-# cargo build --target x86_64-xen-pv.json -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem
+# cargo build -p oxerun -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem -Zjson-target-spec --target x86_64-xen-hvm.json --bin hello
 ```
 
 And to generate assember files in target/x86_64-xen-pv/{release|debug}/deps/
 
 ```shell
-# RUSTFLAGS="--emit asm -C llvm-args=-x86-asm-syntax=intel" cargo build --target x86_64-xen-pv.json -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem
+# RUSTFLAGS="--emit asm -C llvm-args=-x86-asm-syntax=intel" cargo build -p oxerun -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem -Zjson-target-spec --target x86_64-xen-hvm.json --bin hello
 ```
 
 ## Building for aarch64:

@@ -29,22 +29,8 @@ impl NativeXenHypercall {
 
 impl XenHypercall for NativeXenHypercall {
     unsafe fn hypercall5(&self, cmd: usize, param: [usize; 5]) -> Result<usize, XenError> {
-        let output: isize;
-
-        unsafe {
-            asm!(
-                "hvc 0xea1",
-                inlateout("x16") cmd => output,
-                inlateout("x0") param[0] => _,
-                inlateout("x1") param[1] => _,
-                inlateout("x2") param[2] => _,
-                inlateout("x3") param[3] => _,
-                inlateout("x4") param[4] => _,
-                options(nostack)
-            );
-        }
-
-        parse_hypercall_return(output)
+        // TODO
+        Err(XenError::Other("TODO"))
     }
 
     fn make_const_object<T: Copy>(&self, buffer: &T) -> Result<impl XenConstBuffer<T>, XenError> {

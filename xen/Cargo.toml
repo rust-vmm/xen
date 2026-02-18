@@ -11,7 +11,13 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+volatile = { version = "0.6.1", features = ["derive", "unstable"] }
 xen-sys = { path = "../xen-sys" }
+
+[dependencies.nix]
+version = "0.30.1"
+features = ["ioctl", "mman"]
+optional = true
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_vendor, values("xen"))'] }

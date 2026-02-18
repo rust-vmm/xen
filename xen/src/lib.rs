@@ -8,9 +8,8 @@
  * except according to those terms.
  */
 
-#![allow(internal_features)]
-#![cfg_attr(target_vendor = "xen", feature(lang_items))]
 #![no_std]
+#![feature(likely_unlikely)]
 
 #[cfg(target_arch = "x86_64")]
 mod x86_64;
@@ -22,5 +21,8 @@ mod aarch64;
 #[cfg(target_arch = "aarch64")]
 pub use self::aarch64::*;
 
+pub mod io;
+
 // export functionality
+pub mod event;
 pub mod hypercall;

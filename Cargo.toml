@@ -4,6 +4,7 @@ members = [
     "xen",
     "xen-bindings",
     "xen-ioctls",
+    "xen-unix",
     "xen-store",
     "xen-sys",
 ]

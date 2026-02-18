@@ -8,42 +8,40 @@
  * except according to those terms.
  */
 
-use super::*;
-
 #[repr(C)]
 pub struct start_info {
     /// "xen-<version>-<platform>"
-    pub magic: [c_char; 32],
+    pub magic: [u8; 32],
     /// total pages allocated to this domain
-    pub nr_pages: c_ulong,
+    pub nr_pages: u64,
     /// machine address of struct shared_info
-    pub shared_info: xen_pfn_t,
+    pub shared_info: u64,
     /// SIF_xxx flags
     pub flags: u32,
     /// machine page number of shared page
-    pub store_mfn: xen_pfn_t,
+    pub store_mfn: u64,
     /// event channel for store communication
-    pub store_evtchn: event_port,
+    pub store_evtchn: u32,
     /// console (dom0/domU)
     pub console: start_info_console,
     /// virtual address of page directory
-    pub pt_base: c_ulong,
+    pub pt_base: u64,
     /// number of bootstrap p.t. frames
-    pub nr_pt_frames: c_ulong,
+    pub nr_pt_frames: u64,
     /// virtual address of page frame list
-    pub mfn_list: c_ulong,
+    pub mfn_list: u64,
     /// virtual address of pre-loaded module
     /// PFN of pre-loaded module if SIF_MOD_START_PFN set in flags
-    pub mod_start: c_ulong,
+    pub mod_start: u64,
     /// size (bytes) of pre-loaded module
-    pub mod_len: c_ulong,
+    pub mod_len: u64,
     /// guest command line
-    pub cmd_line: [i8; 1024],
+    pub cmd_line: [u8; 1024],
     /// PFN range here covers both page table and P->M table frames
     /// First PFN forming initial P->M table
-    pub first_p2m_pfn: c_ulong,
+    pub first_p2m_pfn: u64,
     /// number of PFNs forming initial P->M table
-    pub nr_p2m_frames: c_ulong,
+    pub nr_p2m_frames: u64,
 }
 
 #[repr(C)]
@@ -57,9 +55,9 @@ pub union start_info_console {
 #[derive(Clone, Copy)]
 pub struct start_info_console_domU {
     /// machine page number of console page
-    pub mfn: xen_pfn_t,
+    pub mfn: u64,
     /// event channel for console page
-    pub evtchn: event_port,
+    pub evtchn: u32,
 }
 
 #[repr(C)]
