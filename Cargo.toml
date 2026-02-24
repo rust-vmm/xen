@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "xen",
     "xen-bindings",
+    "xen-hvm",
     "xen-ioctls",
     "xen-store",
     "xen-sys",
