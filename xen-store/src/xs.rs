@@ -112,7 +112,7 @@ fn thread_function(
             queue_message(
                 &condvar,
                 eventfd,
-                Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
+                Err(Error::other("Xen Store transaction error")),
             );
             continue;
         }
@@ -139,7 +139,7 @@ fn thread_function(
                 );
             }
             Err(e) => {
-                queue_message(&condvar, eventfd, Err(Error::new(ErrorKind::Other, e)));
+                queue_message(&condvar, eventfd, Err(Error::other(e)));
             }
         };
     }
@@ -242,7 +242,7 @@ impl XenStoreHandle {
                 }
                 Err(e) => Err(e),
             },
-            None => Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
+            None => Err(Error::other("Xen Store transaction error")),
         }
     }
 
@@ -320,7 +320,7 @@ impl XenStoreHandle {
                 }
                 Err(e) => Err(e),
             },
-            None => Err(Error::new(ErrorKind::Other, "Xen Store transaction error")),
+            None => Err(Error::other("Xen Store transaction error")),
         }
     }
 

@@ -72,7 +72,7 @@ pub unsafe fn xenforeignmemory_map_resource(
 
     /* Check flags only contains POSIX defined values */
     if (flags & !(MAP_SHARED | MAP_PRIVATE)) != 0 {
-        return Err(Error::new(ErrorKind::Other, "Invalid flags"));
+        return Err(Error::other("Invalid flags"));
     }
 
     if addr.is_null() && nr_frames != 0 {
