@@ -64,7 +64,7 @@ pub extern "C" fn do_trap_irq() -> ! {
 /// and a stack unwinder so that your application does not have to. The macro
 /// ensures that the main function is the proper type.
 ///
-/// Inspired by Philip Opperman's https://github.com/rust-osdev/bootloader
+/// Inspired by Philip Opperman's <https://github.com/rust-osdev/bootloader>
 #[macro_export]
 macro_rules! entry_point {
     ($entry:path) => {
