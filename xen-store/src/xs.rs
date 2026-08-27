@@ -22,7 +22,6 @@ use std::{
     thread::JoinHandle,
 };
 
-use nix::libc::iovec;
 use vmm_sys_util::eventfd::{EventFd, EFD_SEMAPHORE};
 use xen_bindings::bindings::xs_watch_type;
 
@@ -33,6 +32,25 @@ pub const XS_READ: u32 = 2;
 pub const XS_WATCH: u32 = 4;
 pub const XS_WRITE: u32 = 11;
 pub const XS_WATCH_EVENT: u32 = 15;
+
+fn message_bytes(message: &XenSocketMessage) -> &[u8] {
+    // SAFETY: XenSocketMessage is #[repr(C)] with four u32 fields and no padding.
+    unsafe {
+        std::slice::from_raw_parts(
+            std::ptr::addr_of!(*message).cast(),
+            mem::size_of::<XenSocketMessage>(),
+        )
+    }
+}
+
+fn write_request<W: Write>(
+    writer: &mut W,
+    message: &XenSocketMessage,
+    payload: &[u8],
+) -> Result<(), std::io::Error> {
+    writer.write_all(message_bytes(message))?;
+    writer.write_all(payload)
+}
 
 fn queue_message(
     condvar: &Arc<(
@@ -188,44 +206,14 @@ impl XenStoreHandle {
         })
     }
 
-    fn xs_transaction(
-        &self,
-        r#type: u32,
-        iovec_buffers: &mut Vec<iovec>,
-    ) -> Result<String, std::io::Error> {
-        let mut xen_socket_msg = XenSocketMessage::new(r#type, iovec_buffers)?;
+    fn xs_transaction(&self, r#type: u32, payload: &[u8]) -> Result<String, std::io::Error> {
+        let xen_socket_msg = XenSocketMessage::new(r#type, payload.len())?;
         let (lock, cvar) = &*self.reply_condvar;
 
         let mut tx_socket = self.tx_socket.lock().unwrap();
-        {
-            // SAFETY: `xen_socket_msg` is `XenSocketMessage` bytes sized.
-            let xen_socket_msg_slice: &[u8] = unsafe {
-                std::slice::from_raw_parts(
-                    std::ptr::addr_of_mut!(xen_socket_msg).cast(),
-                    mem::size_of::<XenSocketMessage>(),
-                )
-            };
 
-            /*
-             * Grabbing the mutex guarantees there will only be
-             * one active transcation at a time.
-             */
-            tx_socket.write_all(xen_socket_msg_slice)?;
-        }
-
-        // SAFETY: tx_socket is a valid file descriptor and the pointer/length we pass
-        // are valid allocated values.
-        let ret = unsafe {
-            libc::writev(
-                tx_socket.as_raw_fd(),
-                iovec_buffers.as_ptr(),
-                iovec_buffers.len() as i32,
-            )
-        };
-
-        if ret < 0 {
-            return Err(Error::last_os_error());
-        }
+        // Serialize complete request/response transactions.
+        write_request(&mut *tx_socket, &xen_socket_msg, payload)?;
 
         let mut reply_vec = lock.lock().unwrap();
         while reply_vec.is_empty() {
@@ -247,49 +235,23 @@ impl XenStoreHandle {
     }
 
     pub fn read_str(&self, path: &str) -> Result<String, std::io::Error> {
-        let c_path = CString::new(path)?;
-        let mut iovec_buffers = vec![iovec {
-            iov_base: c_path.as_ptr() as *mut _,
-            iov_len: path.len() + 1,
-        }];
+        let payload = CString::new(path)?.into_bytes_with_nul();
 
-        self.xs_transaction(XS_READ, &mut iovec_buffers)
+        self.xs_transaction(XS_READ, &payload)
     }
 
     pub fn write_str(&self, path: &str, val: &str) -> Result<(), std::io::Error> {
-        let cpath = CString::new(path)?;
-        let cval = CString::new(val)?;
-        let mut iovec_buffers = vec![
-            iovec {
-                iov_base: cpath.as_ptr() as *mut _,
-                iov_len: path.len() + 1,
-            },
-            iovec {
-                iov_base: cval.as_ptr() as *mut _,
-                iov_len: val.len(),
-            },
-        ];
+        let mut payload = CString::new(path)?.into_bytes_with_nul();
+        payload.extend(CString::new(val)?.into_bytes());
 
-        self.xs_transaction(XS_WRITE, &mut iovec_buffers)
-            .map(|_| ())
+        self.xs_transaction(XS_WRITE, &payload).map(|_| ())
     }
 
     pub fn create_watch(&self, path: &str, token: &str) -> Result<(), std::io::Error> {
-        let cpath = CString::new(path)?;
-        let ctoken = CString::new(token)?;
-        let mut iovec_buffers = vec![
-            iovec {
-                iov_base: cpath.as_ptr() as *mut _,
-                iov_len: path.len() + 1,
-            },
-            iovec {
-                iov_base: ctoken.as_ptr() as *mut _,
-                iov_len: token.len() + 1,
-            },
-        ];
+        let mut payload = CString::new(path)?.into_bytes_with_nul();
+        payload.extend(CString::new(token)?.into_bytes_with_nul());
 
-        self.xs_transaction(XS_WATCH, &mut iovec_buffers)
-            .map(|_| ())
+        self.xs_transaction(XS_WATCH, &payload).map(|_| ())
     }
 
     pub fn read_watch(&self, index: xs_watch_type) -> Result<String, std::io::Error> {
@@ -329,13 +291,9 @@ impl XenStoreHandle {
     }
 
     pub fn directory(&self, path: &str) -> Result<Vec<i32>, std::io::Error> {
-        let c_path = CString::new(path)?;
-        let mut iovec_buffers = vec![iovec {
-            iov_base: c_path.as_ptr() as *mut _,
-            iov_len: path.len() + 1,
-        }];
+        let payload = CString::new(path)?.into_bytes_with_nul();
 
-        match self.xs_transaction(XS_DIRECTORY, &mut iovec_buffers) {
+        match self.xs_transaction(XS_DIRECTORY, &payload) {
             Ok(res) => Ok(res
                 .as_str()
                 .split('\0')
@@ -365,5 +323,51 @@ impl Drop for XenStoreHandle {
 
         /* Wait for it to stop */
         let _ = self.handler.take().unwrap().join();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Default)]
+    struct ShortWriter {
+        bytes: Vec<u8>,
+        write_calls: usize,
+    }
+
+    impl Write for ShortWriter {
+        fn write(&mut self, buffer: &[u8]) -> Result<usize, std::io::Error> {
+            self.write_calls += 1;
+
+            // Write the header, interrupt the payload, then force short writes.
+            let written = match self.write_calls {
+                1 => buffer.len(),
+                2 => return Err(Error::from(ErrorKind::Interrupted)),
+                _ => buffer.len().min(3),
+            };
+
+            self.bytes.extend_from_slice(&buffer[..written]);
+            Ok(written)
+        }
+
+        fn flush(&mut self) -> Result<(), std::io::Error> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn writes_complete_request_after_interrupted_and_short_writes() -> Result<(), std::io::Error> {
+        let payload = b"domid\0";
+        let message = XenSocketMessage::new(XS_READ, payload.len())?;
+        let mut writer = ShortWriter::default();
+
+        write_request(&mut writer, &message, payload)?;
+
+        let mut expected = message_bytes(&message).to_vec();
+        expected.extend_from_slice(payload);
+        assert_eq!(writer.bytes, expected);
+        assert!(writer.write_calls > 2);
+        Ok(())
     }
 }
