@@ -17,14 +17,16 @@ use crate::aarch64::types::*;
 use crate::x86_64::types::*;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "xen_domctl_interface_version_0x17")] {
+    if #[cfg(feature = "xen_domctl_interface_version_0x18")] {
+        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x18;
+    } else if #[cfg(feature = "xen_domctl_interface_version_0x17")] {
         pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x17;
     } else if #[cfg(feature = "xen_domctl_interface_version_0x16")] {
         pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x16;
     } else if #[cfg(feature = "xen_domctl_interface_version_0x15")] {
         pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x15;
     } else {
-        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x17;
+        pub const XEN_DOMCTL_INTERFACE_VERSION: u32 = 0x18;
     }
 }
 
