@@ -10,8 +10,6 @@
 
 use std::io;
 
-use nix::libc::{iovec, E2BIG};
-
 pub const XENSTORED_SOCKET: &str = "/var/run/xenstored/socket";
 pub const XENSTORE_PAYLOAD_MAX: u32 = 4096;
 
@@ -26,20 +24,17 @@ pub(crate) struct XenSocketMessage {
 }
 
 impl XenSocketMessage {
-    #[allow(clippy::ptr_arg)]
-    pub(crate) fn new(r#type: u32, iovec_buffers: &mut Vec<iovec>) -> Result<Self, std::io::Error> {
+    pub(crate) fn new(r#type: u32, payload_len: usize) -> Result<Self, std::io::Error> {
+        if payload_len > XENSTORE_PAYLOAD_MAX as usize {
+            return Err(io::Error::from_raw_os_error(libc::E2BIG));
+        }
+
         let msg = XenSocketMessage {
             r#type,
             req_id: 0,
             tx_id: 0,
-            len: iovec_buffers
-                .iter()
-                .fold(0, |acc, iovec| acc + iovec.iov_len as u32),
+            len: payload_len as u32,
         };
-
-        if msg.len > XENSTORE_PAYLOAD_MAX {
-            return Err(io::Error::from_raw_os_error(E2BIG));
-        }
 
         Ok(msg)
     }
